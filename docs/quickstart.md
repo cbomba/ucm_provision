@@ -59,7 +59,6 @@ data/sites.csv
 
 Example sites.csv
 ### CSV
-```md
 ```csv
 site_code,site_name,city,state
 CHI01,Chicago HQ,Chicago,IL
