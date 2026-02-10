@@ -27,7 +27,7 @@ Dial plans are defined as YAML files and stored per environment.
 
 Directory structure:
 
-/data/dialplans/customers/<environment-slug>/dialplan.yml
+/data/dialplans/customers/\<environment-slug\>/dialplan.yml
 
 Example:
 
