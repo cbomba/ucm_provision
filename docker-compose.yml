@@ -1,0 +1,18 @@
+services:
+  ucm-provisioner:
+    build: .
+    container_name: ucm-site-provisioner
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_DATA_DIR=/data
+      - APP_DATA_EXECUTIONS_DIR=/data/executions
+      - APP_ORG=US
+      - APP_DEFAULT_NAMING=/app/naming.yml
+      # Optional: provide at runtime; otherwise UI will ask per request
+      # - APP_PASSPHRASE=change_me
+    volumes:
+      - ./app/static:/app/app/static
+      - ./data:/data
+      - ./data/executions:/data/executions
+      - ./naming.yml:/app/naming.yml:ro

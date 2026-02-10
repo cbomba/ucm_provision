@@ -1,0 +1,80 @@
+
+body {
+	color: #000000
+}
+
+h1 {
+	text-align: center
+}
+
+h2 {
+	page-break-before: always
+}
+
+h2#Mod_History {
+	text-align: center
+}
+
+th {
+	color: #000000;
+	text-align: left;
+}
+
+td {
+	vertical-align: top
+}
+
+td .label {
+	white-space: nowrap;
+	background-color: #ffffcc;
+	width: 8em
+}
+
+td .data {
+	background-color: #ffffff;
+	width: 90%
+}
+
+.tablename {
+	background-color: #e5e5e5;
+}
+
+.tableinfo {
+	background-color: #e5e5e5;
+	page-break-before: avoid;
+	width: 6em
+}
+
+.fieldname {
+	background-color: #99ccff
+}
+
+.multifieldinfo {
+	background-color: #ccffcc
+}
+
+.ruleinfo {
+	background-color: #ffcccc;
+	width: 7em
+}
+
+.relatedfieldinfo {
+	white-space: nowrap;
+	background-color: #ffcccc;
+	width: 7em
+}
+
+.tablelisting {
+	list-style-type: none;
+}
+
+.masthead_logo {
+	vertical-align: center;
+	text-align: center;
+}
+
+.masthead_docinfo {
+	white-space: nowrap;
+}
+
+

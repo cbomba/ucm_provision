@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dial Plan Designer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Dial Plan Designer</h1>
+</header>
+
+<main class="container">
+
+<section class="card">
+  <h2>Environments & Credentials</h2>
+
+  <p class="muted">
+    Select the environment and verify connectivity.
+  </p>
+
+  <div class="dialplan-env-row">
+  <label class="dialplan-env-select">
+    Select Environment
+    <select id="envSelect">
+      <option value="">— Select an environment —</option>
+    </select>
+  </label>
+
+  <div class="dialplan-passphrase-wrap">
+    <label>
+      Passphrase
+      <input
+        id="passphrase"
+        type="password"
+        placeholder="Required to decrypt credentials"
+      />
+    </label>
+
+    <div class="test-connection-group">
+  <button id="testEnvBtn" class="secondary">Test Connection</button>
+  <div id="testEnvStatus" class="test-status"></div>
+    </div>
+</div>
+<br>
+  <div class="actions">
+    <button id="loadDialplanBtn" disabled>Load Dial Plan</button>
+    <button id="verifyGlobalsBtn" class="secondary" disabled>Verify Globals</button>
+  </div>
+  <div id="dialplanStatus" class="muted"></div>
+</section>
+
+
+<section class="card hidden" id="exampleSiteCard">
+  <h2>Example Site</h2>
+
+  <div class="grid-2">
+    <label>Site Code <input id="siteCode" value="ELM"></label>
+    <label>Site Name <input id="siteName" value="Elmhurst, IL"></label>
+    <label>City <input id="city" value="Elmhurst"></label>
+    <label>State <input id="state" value="IL"></label>
+  </div>
+  <br>
+  <button id="renderExampleBtn">Render Example</button>
+</section>
+
+<section class="card hidden" id="partitionsCard">
+  <h2>Partitions</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody id="partitionsTable"></tbody>
+  </table>
+</section>
+
+<section class="card hidden" id="cssCard">
+  <h2>Calling Search Spaces</h2>
+  <div class="legend">
+  <span class="legend-item">
+    <span class="legend-icon">🌐</span> Global Partition
+  </span>
+
+  <span class="legend-item">
+    <span class="legend-icon">🏢</span> Site Partition
+  </span>
+
+  <span class="legend-item css-member verified">
+    ✅ Verified
+  </span>
+
+  <span class="legend-item css-member missing">
+    ⚠ Missing
+  </span>
+
+  <span class="legend-item css-member unverified">
+    ❓ Not Verified
+  </span>
+</div>
+  <div id="cssList"></div>
+</section>
+
+<section class="card hidden" id="globalsCard">
+  <h2>Global Partition Verification</h2>
+  <pre id="globalsOut">{}</pre>
+</section>
+
+</main>
+
+<script src="/static/dialplan.js"></script>
+</body>
+</html>

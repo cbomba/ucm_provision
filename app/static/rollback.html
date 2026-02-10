@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Rollback</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- External stylesheet -->
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<header class="app-header">
+    <h1>Rollback Plans</h1>
+  </header>
+
+<main class="container">
+
+
+<section class="card">
+  <h2>Select Plans</h2>
+  <select id="planSelect"></select>
+  <div id="rollbackWarning" class="warning" style="display:none">
+    ⚠ These objects will be permanently deleted from CUCM.
+  </div>
+
+  <div class="actions">
+    <button onclick="previewRollback()">Preview Rollback</button>
+  </div>
+  <br>
+  <div class="view-toggle">
+      <button id="planViewSimple" class="toggle active">Simplified</button>
+      <button id="planViewJson" class="toggle">JSON</button>
+  </div>
+  <br>
+  <div class="plan-preview">
+      <pre id="planSimple"></pre>
+      <pre id="planJson" class="hidden"></pre>
+  </div>
+</section>
+
+    <section class="card">
+      <h2>Execute</h2>
+      <div id="rollbackStatus" class="err"></div>
+      <button id="applyRollbackBtn" onclick="applyRollback()" class="secondary">Execute Rollback (DESTRUCTIVE)</button>
+      <br>
+      <div class="progress-container hidden" id="progressBox">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
+      </div>
+      <pre id="executeOut">{}</pre>
+    </section>
+
+<hr/>
+
+<section class="card">
+  <h2>Environments & Credentials</h2>
+
+  <p class="muted">
+    Select the environment used for this execution and verify connectivity
+    before applying a rollback.
+  </p>
+
+  <div class="env-header">
+    <label>
+      Select Environment
+      <select id="envSelect">
+        <option value="">— Select an environment —</option>
+      </select>
+    </label>
+
+    <label>
+      Passphrase
+      <input
+        id="passphrase"
+        type="password"
+        placeholder="Required to decrypt credentials"
+      />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button id="testEnvBtn" class="secondary" disabled>
+      Test Connection
+    </button>
+    <span id="testEnvStatus"></span>
+  </div>
+</section>
+</main>
+<script src="/static/rollback.js"></script>
+</body>
+</html>

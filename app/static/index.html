@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CUCM Site Provisioner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- External stylesheet -->
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>CUCM Site Provisioner</h1>
+    <nav>
+      <a href="/static/cucm-data-dictionary-15/index.html" target="_blank" rel="noopener noreferrer">📘 CUCM Data Dictionary (v15)</a>
+      <br>
+      <a href="https://developer.cisco.com/docs/axl-schema-reference/" target="_blank" rel="noopener noreferrer">📘 CUCM AXL Schema Reference (v15)</a>  
+      <br>
+      <a id="dialplanLink"  href="/static/dialplan.html"  target="_blank" rel="noopener noreferrer">☎️ Dial Plan Designer</a>
+      <br>
+      <a id="rollbackLink"  href="/static/rollback.html"  style="display: none;"  target="_blank">↩️ Rollback Plans</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <section class="card">
+      <h2>Upload Sites CSV</h2>
+      <input type="file" id="csvFile" accept=".csv" />
+      <button id="uploadBtn">Upload</button>
+      <div id="uploadStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>Build Provisioning Plan</h2>
+      <label>
+      <div class="env-summary">
+        Environment:
+        <span id="selectedEnvLabel" class="env-pill prod">None</span>
+      </div>
+      </label>
+
+      <label>
+        Org
+        <input id="orgInput" placeholder="US" />
+      </label>
+
+      <button id="planBtn">Build Plan</button>
+      <div id="planStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>Plan Summary</h2>
+      <pre id="planSummary">{}</pre>
+    </section>
+
+    <section class="card">
+      <h2>Plan Preview</h2>
+      <div class="view-toggle">
+      <button id="planViewSimple" class="toggle active">Simplified</button>
+      <button id="planViewJson" class="toggle">JSON</button>
+      </div>
+      <br>
+      <div class="plan-preview">
+      <pre id="planSimple"></pre>
+      <pre id="planJson" class="hidden"></pre>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Execute</h2>
+      <button id="executeBtn">Execute Plan</button>
+      <br>
+      <div class="progress-container hidden" id="progressBox">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
+      </div>
+      <pre id="executeOut">{}</pre>
+    </section>
+
+
+    <section class="card">
+  <h2>Environments & Credentials</h2>
+
+  <p class="muted">
+    Credentials are stored encrypted locally. A passphrase is required to save or update an environment.
+  </p>
+  
+  <div class="env-header">
+  <label>
+    Select Existing Environment
+    <select id="envSelect">
+      <option value="">— Select an environment —</option>
+    </select>
+  </label>
+
+  <label>
+    Passphrase
+    <input
+      id="passphrase"
+      type="password"
+      placeholder="Required to decrypt credentials"
+    />
+  </label>
+</div>
+
+<hr />
+
+  <div class="grid grid-2">
+  <!-- Row 1 -->
+  <label>
+    Environment Name
+    <input id="envName" placeholder="LabCluster" />
+  </label>
+
+  <label>
+    CUCM AXL URL
+    <input id="cucmUrl" placeholder="https://cucm-pub:8443/axl/" />
+  </label>
+
+  <!-- Row 2 -->
+  <label>
+    Environment Type
+    <select id="envType">
+      <option value="test">🧪 Test</option>
+      <option value="prod">🚨 Production</option>
+    </select>
+  </label>
+
+  <div></div> <!-- spacer to keep next row aligned -->
+
+  <!-- Row 3 -->
+  <label>
+    AXL Username
+    <input id="cucmUser" placeholder="axl-user" />
+  </label>
+
+  <label>
+    AXL Password
+    <input id="cucmPass" type="password" />
+  </label>
+  </div>
+  <!-- Row 4 -->
+  <div class="checkbox-row">
+  <label class="checkbox">
+    <input type="checkbox" id="verifyTls" />
+    Verify TLS certificates
+  </label>
+</div>  
+
+  
+  <div class="actions">
+    <button id="saveEnvBtn">Save Environment</button>
+    <span id="envStatus"></span>
+    <button id="testEnvBtn" class="secondary" disabled>Test Connection</button>
+    <span id="testEnvStatus"></span>
+  </div>
+</section>
+</main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

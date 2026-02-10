@@ -1,0 +1,32 @@
+# =========================
+# Runtime / generated files
+# =========================
+app.db
+
+# =========================
+# Uploads & executions
+# =========================
+data/uploads/
+data/executions/
+
+# =========================
+# Customer dialplans
+# =========================
+# Ignore all customer data by default
+data/dialplans/customers/*
+
+# Allow demo customer(s)
+!data/dialplans/customers/demo/
+!data/dialplans/customers/demo/**
+!data/dialplans/customers/.gitkeep
+
+# =========================
+# OS / tooling
+# =========================
+.DS_Store
+__pycache__/
+*.pyc
+
+# =========================
+# Secrets
+# =========================

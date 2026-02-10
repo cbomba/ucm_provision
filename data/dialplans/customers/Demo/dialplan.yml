@@ -1,0 +1,98 @@
+schema_version: 1
+
+profile:
+  id: demo
+  name: demo US Production Dial Plan
+  customer: demo
+  region: US
+  environment: prod
+  cluster: cucm-us-prod-01
+  description: >
+    demo Standard multi-partition dial plan with device, inbound, internal, external, emergency, and forwarding CSS.
+    
+
+variables:
+  region: NA
+  country: US
+  state: N/A
+ 
+partitions:
+  aar:
+    name: "{site}_AAR"
+    description: "{site_name} AAR Calls"
+    scope: site
+
+  emergency:
+    name: "{site}_Emergency"
+    description: "{site_name} Emergency Calls"
+    scope: site
+
+  site:
+    name: "{site}_Intrasite"
+    description: "{site_name} Site Calls"
+    scope: site
+
+
+css:
+  aar:
+    name: "{site}_AAR"
+    description: "{site_name} AAR CSS"
+    members:
+      - aar
+
+  device:
+    name: "{site}_Device"
+    description: "{site_name} Device CSS"
+    members:
+      - e911
+      - site
+      - lines
+      - voicemail
+
+  internal:
+    name: "{site}_Internal"
+    description: "{site_name} Internal CSS"
+    members:
+      - site
+      - lines
+      - normalize
+      - voicemail
+
+  international:
+    name: "{site}_International"
+    description: "{site_name} International CSS"
+    members:
+      - site
+      - lines
+      - normalize
+      - national_pstn
+      - intl_pstn
+      - voicemail
+
+  national:
+    name: "{site}_National"
+    description: "{site_name} National CSS"
+    members:
+      - site
+      - lines
+      - normalize
+      - national_pstn
+      - voicemail
+
+globals:
+  partitions:
+    voicemail: demo_Voicemail
+    e911: US_PSTN_911
+    lines: demo_DN
+    block_toll: US_Block_Toll
+    block_intl: US_Block_International
+    block_national: US_Block_National
+    block_local: US_Block_Local
+    normalize: UStoE164
+    national_pstn: US_PSTN_National
+    intl_pstn: PSTN_International
+
+
+rules:
+  apply_to_sites: true
+  create_missing_globals: false

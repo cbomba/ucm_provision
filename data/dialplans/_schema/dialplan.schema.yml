@@ -1,0 +1,38 @@
+schema_version: 1
+profile:
+  id: standard_us_site
+  name: Standard US Site Dial Plan
+  description: >
+    Default US site dial plan including internal, external,
+    emergency, inbound, and forwarding CSS.
+
+variables:
+  region: AMER
+  country: US
+  state: PA
+  city: PTB
+
+partitions:
+  <partition_key>:
+    name: string
+    description: string
+    scope: site | global
+    order: integer (optional)
+
+css:
+  <css_key>:
+    name: string
+    description: string
+    members:
+      - <partition_key | literal>
+    order: integer (optional)
+
+globals:
+  partitions:
+    <key>: literal_name
+  css:
+    <key>: literal_name
+
+rules:
+  apply_to_sites: true
+  create_missing_globals: false
