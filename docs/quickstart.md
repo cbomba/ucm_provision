@@ -8,6 +8,13 @@ write YAML → preview visually → verify globals → execute safely
 
 ⸻
 
+1️⃣ Clone the Repository
+
+```git clone https://github.com/your-org/ucm-site-provisioner.git```
+```cd ucm-site-provisioner```
+
+⸻
+
 🖥️ Start the Application
 
 Run the application using Docker:
@@ -37,6 +44,21 @@ Notes:
 	•	The environment slug must match the environment name shown in the UI
 	•	YAML is the source of truth
 	•	The UI does not modify YAML directly
+
+⸻
+
+Edit sites.csv to Define Your Sites
+
+The application uses sites.csv to define site-level metadata that can be imported or referenced during provisioning.
+
+📍 You must edit this file before importing real sites.
+
+File location:
+data/sites.csv
+
+Example sites.csv
+\<Sample data here\>
+
 
 ⸻
 
