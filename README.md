@@ -205,7 +205,7 @@ A legend is displayed directly in the UI to keep this self-documenting.
 ---
 
 ## 📁 Directory Structure
-
+```md
 /app
 ├── app/
 │   ├── main.py
@@ -221,7 +221,7 @@ A legend is displayed directly in the UI to keep this self-documenting.
 └── customers/
 └── /
 └── dialplan.yml
-
+```
 Execution and rollback artifacts are stored alongside the plan for traceability.
 
 ---
