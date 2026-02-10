@@ -35,11 +35,11 @@ Dial plans are defined as YAML files and stored per environment.
 
 Directory structure:
 
-/data/dialplans/customers/\<environment-slug\>/dialplan.yml
+`/data/dialplans/customers/\<environment-slug\>/dialplan.yml`
 
 Example:
 
-/data/dialplans/customers/s4n-prod-cluster/dialplan.yml
+`/data/dialplans/customers/s4n-prod-cluster/dialplan.yml`
 
 Notes:
 	•	The environment slug must match the environment name shown in the UI
