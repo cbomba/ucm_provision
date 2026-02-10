@@ -26,13 +26,13 @@ class UcmAxlClient:
         if soap_action:
             headers["SOAPAction"] = soap_action
 
-        print("\n====== AXL RAW REQUEST ======")
-        print("URL:", self.axl_url)
-        print("SOAPAction:", headers.get("SOAPAction"))
-        print("Content-Type:", headers.get("Content-Type"))
-        print("AUTH:", f"{self.username}:{'*' * len(self.password)}")
-        print("BODY:\n", body.strip())
-        print("====== END REQUEST ======\n")
+        # print("\n====== AXL RAW REQUEST ======")
+        # print("URL:", self.axl_url)
+        # print("SOAPAction:", headers.get("SOAPAction"))
+        # print("Content-Type:", headers.get("Content-Type"))
+        # print("AUTH:", f"{self.username}:{'*' * len(self.password)}")
+        # print("BODY:\n", body.strip())
+        # print("====== END REQUEST ======\n")
 
 
         r = requests.post(
