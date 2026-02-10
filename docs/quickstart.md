@@ -55,10 +55,9 @@ The application uses sites.csv to define site-level metadata that can be importe
 📍 You must edit this file before importing real sites.
 
 File location:
-data/sites.csv
+`data/sites.csv`
 
 Example sites.csv
-### CSV
 ```csv
 site_code,site_name,city,state
 CHI01,Chicago HQ,Chicago,IL
