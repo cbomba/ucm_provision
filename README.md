@@ -219,17 +219,17 @@ A legend is displayed directly in the UI to keep this self-documenting.
 │   └── secrets.py
 ├── static/
 │   ├── dialplan.html
-|   ├── dialplan.js
+│   ├── dialplan.js
 │   ├── index.html
 │   ├── app.js
 │   ├── rollback.html
 │   ├── rollback.js
 │   └── styles.css
 ├── data/
-|   └── dialplans/
-|       └── customers/
-|           └── demo/
-|               └── dialplan.yml
+│   └── dialplans/
+│       └── customers/
+│           └── demo/
+│               └── dialplan.yml
 └── docs/
 
 
