@@ -59,8 +59,8 @@ File location:
 
 Example sites.csv
 ```csv
-site_code,site_name,city,state
-CHI01,Chicago HQ,Chicago,IL
+site_code,site_detail,state,city,physical_location_description,srst_ip,mrg_members,mrgl_members,ucm_group,date_time_group,softkey_template,device_mobility_group,mobility_subnet,mobility_mask
+PIT,"Pittsburgh, PA",PA,Pittsburgh,Pittsburgh Office,10.1.1.1,,"SW-MTP-MRG,SW-ANN-MRG,SW-MOH-AUDIO_UCast-MRG",Default,PIT_DTG,Standard User,DMG,10.1.1.0,24
 ```
 
 ⸻
