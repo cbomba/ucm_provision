@@ -20,7 +20,7 @@ write YAML → preview visually → verify globals → execute safely
 
 Run the application using Docker:
 
-docker compose up --build
+```docker compose up --build```
 
 Once running, access the UI at:
 
@@ -58,8 +58,12 @@ File location:
 data/sites.csv
 
 Example sites.csv
-\<Sample data here\>
-
+### CSV
+```md
+```csv
+site_code,site_name,city,state
+CHI01,Chicago HQ,Chicago,IL
+```
 
 ⸻
 
