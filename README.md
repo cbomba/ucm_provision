@@ -206,21 +206,33 @@ A legend is displayed directly in the UI to keep this self-documenting.
 
 ## 📁 Directory Structure
 ```md
-/app
+/ucm_provision
 ├── app/
-│   ├── main.py
+│   ├── csv_schema.py
+│   ├── db.py
+│   ├── executor.py
 │   ├── integrations/
 │   │   └── ucm_axl.py
-│   └── models/
+│   ├── main.py
+│   ├── naming.py
+│   ├── planner.py
+│   └── secrets.py
 ├── static/
-│   ├── dialplan.js
+│   ├── dialplan.html
+|   ├── dialplan.js
+│   ├── index.html
+│   ├── app.js
+│   ├── rollback.html
 │   ├── rollback.js
 │   └── styles.css
-/data
-└── dialplans/
-└── customers/
-└── /
-└── dialplan.yml
+├── data/
+|   └── dialplans/
+|       └── customers/
+|           └── demo/
+|               └── dialplan.yml
+└── docs/
+
+
 ```
 Execution and rollback artifacts are stored alongside the plan for traceability.
 
