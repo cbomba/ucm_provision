@@ -10,9 +10,9 @@ write YAML → preview visually → verify globals → execute safely
 
 1️⃣ Clone the Repository
 
-```git clone https://github.com/your-org/ucm-site-provisioner.git```
+```git clone https://github.com/cbomba/ucm_provision.git```
 
-```cd ucm-site-provisioner```
+```cd ucm-provision```
 
 ⸻
 
