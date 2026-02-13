@@ -445,3 +445,8 @@ label.checkbox {
 .legend-icon {
   font-size: 1rem;
 }
+
+#cucmUrl {
+  width: 100%;
+  max-width: 400px;
+}

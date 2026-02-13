@@ -74,8 +74,8 @@ def list_envs():
     finally:
         conn.close()
 
-@app.post("/api/envs")
-def upsert_env(payload: EnvUpsert, passphrase: Optional[str] = None):
+@app.post("/api/envs/{name}")
+def upsert_env(name: str, payload: EnvUpsert, passphrase: Optional[str] = None):
     passphrase = passphrase or os.getenv("APP_PASSPHRASE")
     if not passphrase:
         raise HTTPException(status_code=400, detail="passphrase is required (query param passphrase or APP_PASSPHRASE)")

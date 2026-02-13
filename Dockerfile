@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+WORKDIR /
 
 # system deps (tiny)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY naming.yml ./naming.yml
+RUN mkdir -p /data && chmod 777 /data
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8080
