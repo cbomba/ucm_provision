@@ -17,4 +17,5 @@ RUN mkdir -p /data && chmod 777 /data
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8081
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8081"]
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
