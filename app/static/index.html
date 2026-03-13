@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CUCM Site Provisioner</title>
+  <title>Site Provisioner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- External stylesheet -->
@@ -11,11 +11,21 @@
 <body>
 
   <header class="app-header">
-    <h1>CUCM Site Provisioner</h1>
+    <h1>Collab Site Provisioner</h1>
     <nav>
-      <a href="/static/cucm-data-dictionary-15/index.html" target="_blank" rel="noopener noreferrer">📘 CUCM Data Dictionary (v15)</a>
+       <!-- CUCM Docs -->
+      <div id="cucmDocs">
+       <a href="/static/cucm-data-dictionary-15/index.html" target="_blank" rel="noopener noreferrer">📘 CUCM Data Dictionary (v15)</a>
       <br>
-      <a href="https://developer.cisco.com/docs/axl-schema-reference/" target="_blank" rel="noopener noreferrer">📘 CUCM AXL Schema Reference (v15)</a>  
+       <a href="https://developer.cisco.com/docs/axl-schema-reference/" target="_blank" rel="noopener noreferrer">📘 CUCM AXL Schema Reference (v15)</a>  
+      </div>
+      
+      <!-- Webex Docs -->
+      <div id="webexDocs" style="display:none;">
+        <a href="https://wxcadm.readthedocs.io/en/latest/index.html" target="_blank" rel="noopener noreferrer">☁️ Webex Admin (wxcadm) Docs</a>
+      <br>
+        <a href="https://developer.webex.com/docs/api/getting-started" target="_blank" rel="noopener noreferrer">☁️ Webex API Docs</a>
+      </div>
       <br>
       <a id="dialplanLink"  href="/static/dialplan.html"  target="_blank" rel="noopener noreferrer">☎️ Dial Plan Designer</a>
       <br>
@@ -110,6 +120,7 @@
 <hr />
 
   <div class="grid grid-2">
+
   <!-- Row 1 -->
   <label>
     Environment Name
@@ -117,40 +128,50 @@
   </label>
 
   <label>
-    CUCM AXL URL
-    <input id="cucmUrl" placeholder="https://cucm-pub:8443/axl/" />
-  </label>
-
-  <!-- Row 2 -->
-  <label>
     Environment Type
-    <select id="envType">
-      <option value="test">🧪 Test</option>
-      <option value="prod">🚨 Production</option>
+    <select id="envPlatform">
+      <option value="CUCM">📞 CUCM</option>
+      <option value="WEBEX">☁️ Webex</option>
     </select>
   </label>
 
-  <div></div> <!-- spacer to keep next row aligned -->
+  <!-- CUCM SECTION -->
+  <div id="cucmSection" class="platform-section">
+    <label>
+      CUCM AXL URL
+      <input id="cucmUrl" placeholder="https://cucm-pub:8443/axl/" />
+    </label>
 
-  <!-- Row 3 -->
-  <label>
-    AXL Username
-    <input id="cucmUser" placeholder="axl-user" />
-  </label>
+    <label>
+      AXL Username
+      <input id="cucmUser" placeholder="axl-user" />
+    </label>
 
-  <label>
-    AXL Password
-    <input id="cucmPass" type="password" />
-  </label>
+    <label>
+      AXL Password
+      <input id="cucmPass" type="password" />
+    </label>
+    <br>
+    <label class="checkbox">
+      <input type="checkbox" id="verifyTls" />
+      Verify TLS certificates
+    </label>
   </div>
-  <!-- Row 4 -->
-  <div class="checkbox-row">
-  <label class="checkbox">
-    <input type="checkbox" id="verifyTls" />
-    Verify TLS certificates
-  </label>
-</div>  
 
+  <!-- WEBEX SECTION -->
+  <div id="webexSection" class="platform-section hidden">
+    <label>
+      Webex Developer Token
+      <input type="password" id="webexToken" />
+    </label>
+
+    <label>
+      Org ID
+      <input type="text" id="webexOrgId" />
+    </label>
+  </div>
+
+</div>
   
   <div class="actions">
     <button id="saveEnvBtn">Save Environment</button>

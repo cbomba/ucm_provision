@@ -13,6 +13,7 @@ def init_db() -> None:
     conn = sqlite3.connect(db_path)
     try:
         cur = conn.cursor()
+
         cur.execute("""
         CREATE TABLE IF NOT EXISTS uploads (
             id TEXT PRIMARY KEY,
@@ -21,13 +22,28 @@ def init_db() -> None:
             created_at TEXT NOT NULL
         )
         """)
+
         cur.execute("""
         CREATE TABLE IF NOT EXISTS envs (
             name TEXT PRIMARY KEY,
             payload_encrypted BLOB NOT NULL,
+            platform TEXT NOT NULL,
+            org_id TEXT,
             created_at TEXT NOT NULL
         )
         """)
+
+        # Safe migration for existing DB
+        try:
+            cur.execute("ALTER TABLE envs ADD COLUMN platform TEXT")
+        except Exception:
+            pass
+
+        try:
+            cur.execute("ALTER TABLE envs ADD COLUMN org_id TEXT")
+        except Exception:
+            pass
+
         cur.execute("""
         CREATE TABLE IF NOT EXISTS plans (
             id TEXT PRIMARY KEY,
@@ -37,6 +53,7 @@ def init_db() -> None:
             created_at TEXT NOT NULL
         )
         """)
+
         conn.commit()
     finally:
         conn.close()

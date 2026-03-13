@@ -1,9 +1,9 @@
 services:
   ucm-provisioner:
     build: .
-    container_name: ucm-provision
+    container_name: ucm-provision-dev
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       - APP_DATA_DIR=/data
       - APP_DATA_EXECUTIONS_DIR=/data/executions

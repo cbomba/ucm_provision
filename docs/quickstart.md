@@ -8,19 +8,11 @@ write YAML → preview visually → verify globals → execute safely
 
 ⸻
 
-1️⃣ Clone the Repository
-
-```git clone https://github.com/cbomba/ucm_provision.git```
-
-```cd ucm-provision```
-
-⸻
-
 🖥️ Start the Application
 
 Run the application using Docker:
 
-```docker compose up --build```
+docker compose up --build
 
 Once running, access the UI at:
 
@@ -35,33 +27,16 @@ Dial plans are defined as YAML files and stored per environment.
 
 Directory structure:
 
-`/data/dialplans/customers/<environment-slug>/dialplan.yml`
+/data/dialplans/customers/<environment-slug>/dialplan.yml
 
 Example:
 
-`/data/dialplans/customers/s4n-prod-cluster/dialplan.yml`
+/data/dialplans/customers/s4n-prod-cluster/dialplan.yml
 
 Notes:
 	•	The environment slug must match the environment name shown in the UI
 	•	YAML is the source of truth
 	•	The UI does not modify YAML directly
-
-⸻
-
-Edit sites.csv to Define Your Sites
-
-The application uses sites.csv to define site-level metadata that can be imported or referenced during provisioning.
-
-📍 You must edit this file before importing real sites.
-
-File location:
-`data/sites.csv`
-
-Example sites.csv
-```csv
-site_code,site_detail,state,city,physical_location_description,srst_ip,mrg_members,mrgl_members,ucm_group,date_time_group,softkey_template,device_mobility_group,mobility_subnet,mobility_mask
-PIT,"Pittsburgh, PA",PA,Pittsburgh,Pittsburgh Office,10.1.1.1,,"SW-MTP-MRG,SW-ANN-MRG,SW-MOH-AUDIO_UCast-MRG",Default,PIT_DTG,Standard User,DMG,10.1.1.0,24
-```
 
 ⸻
 

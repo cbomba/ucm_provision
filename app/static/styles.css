@@ -142,7 +142,7 @@ pre {
 
 input[type="password"] {
   padding: 6px;
-  width: 300px;
+  width: 200px;
 }
 
 .btn-secondary {
@@ -446,7 +446,28 @@ label.checkbox {
   font-size: 1rem;
 }
 
+.platform-section {
+  grid-column: 1 / -1;   /* span full width of grid */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
 #cucmUrl {
   width: 100%;
-  max-width: 400px;
+  max-width: 600px;
+}
+
+#webexOrgId {
+  width: 100%;
+  max-width: 300px;
+}
+
+#webexToken {
+  width: 100%;
+  max-width: 300px;
+}
+
+.hidden {
+  display: none !important;
 }

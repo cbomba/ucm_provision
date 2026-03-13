@@ -9,11 +9,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import yaml
 
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from wxcadm import Webex
 
 from app.db import init_db, db_connect
 from app.csv_schema import SiteRow
@@ -22,6 +24,8 @@ from app.planner import build_plan
 from app.secrets import encrypt_json, decrypt_json
 from app.executor import execute_plan, rollback_plan
 from app.integrations.ucm_axl import UcmAxlClient
+from app.integrations.webex import WebexClient
+
 
 app = FastAPI(title="CUCM Site Provisioner", version="0.1.0")
 
@@ -40,14 +44,21 @@ def index():
 
 class EnvUpsert(BaseModel):
     name: str
-    cucm_url: str
-    cucm_username: str
-    cucm_password: str
+    platform: str = "CUCM"
+    
+    #CUCM
+    cucm_url: Optional[str] = None
+    cucm_username: Optional[str] = None
+    cucm_password: Optional[str] = None
     cucm_verify_tls: bool = False
-    # unity later
+    
+    #Webex
+    access_token: Optional[str] = None
+    org_id: Optional[str] = None
 
 class EnvListItem(BaseModel):
     name: str
+    platform: str
     
 class VerifyGlobalsRequest(BaseModel):
     passphrase: str
@@ -64,30 +75,62 @@ def resolve_dialplan_path(env_name: str) -> str:
 
     return str(path)
 
+def build_client(env: Dict[str, Any]):
+    platform = env.get("platform", "CUCM").upper()
+
+    if platform == "CUCM":
+        return UcmAxlClient(
+            base_url=env["cucm_url"],
+            username=env["cucm_username"],
+            password=env["cucm_password"],
+            verify_tls=env.get("cucm_verify_tls", False),
+        )
+
+    if platform == "WEBEX":
+        return WebexClient(
+            access_token=env["access_token"]
+        )
+
+    raise ValueError(f"Unsupported platform: {platform}")
+
 @app.get("/api/envs", response_model=List[EnvListItem])
 def list_envs():
     conn = db_connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT name FROM envs ORDER BY name")
-        return [{"name": r[0]} for r in cur.fetchall()]
+        cur.execute("SELECT name, platform, org_id FROM envs ORDER BY name")
+        return [{"name": r[0], "platform": r[1], "org_id": r[2]} for r in cur.fetchall()]
     finally:
         conn.close()
 
-@app.post("/api/envs/{name}")
-def upsert_env(name: str, payload: EnvUpsert, passphrase: Optional[str] = None):
+@app.post("/api/envs")
+def upsert_env(payload: EnvUpsert, passphrase: Optional[str] = None):
     passphrase = passphrase or os.getenv("APP_PASSPHRASE")
     if not passphrase:
         raise HTTPException(status_code=400, detail="passphrase is required (query param passphrase or APP_PASSPHRASE)")
 
-    blob = encrypt_json(passphrase, payload.model_dump())
+    data = payload.model_dump()
+    platform = data.get("platform", "CUCM").upper()
+
+    if platform == "CUCM":
+        if not data.get("cucm_url") or not data.get("cucm_username") or not data.get("cucm_password"):
+            raise HTTPException(status_code=400, detail="Missing CUCM credentials")
+
+    elif platform == "WEBEX":
+        if not data.get("access_token"):
+            raise HTTPException(status_code=400, detail="Missing Webex access token")
+        
+        if not data.get("org_id"):
+            raise HTTPException(status_code=400, detail="Missing Webex Org ID")
+
+    blob = encrypt_json(passphrase, data)
     conn = db_connect()
     try:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO envs(name, payload_encrypted, created_at) VALUES(?,?,?) "
-            "ON CONFLICT(name) DO UPDATE SET payload_encrypted=excluded.payload_encrypted",
-            (payload.name, blob, datetime.now(timezone.utc).isoformat()),
+            "INSERT INTO envs(name, payload_encrypted, platform, org_id, created_at) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(name) DO UPDATE SET payload_encrypted=excluded.payload_encrypted, platform=excluded.platform, org_id=excluded.org_id",
+            (payload.name, blob, payload.platform, data.get("org_id"), datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
         return {"status": "OK"}
@@ -101,7 +144,7 @@ def get_env(name: str, passphrase: str | None = None) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="passphrase is required (query param passphrase or APP_PASSPHRASE)")
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute("SELECT payload_encrypted FROM envs WHERE name=?", (name,))
+    cur.execute("SELECT payload_encrypted, platform, org_id FROM envs WHERE name=?", (name,))
     row = cur.fetchone()
 
     if not row:
@@ -113,6 +156,8 @@ def get_env(name: str, passphrase: str | None = None) -> Dict[str, Any]:
             blob = blob.encode("utf-8")
 
         env = decrypt_json(passphrase, blob)
+        env["platform"] = row[1]
+        env["org_id"] = row[2]
     except Exception:
         raise HTTPException(
             status_code=403,
@@ -125,38 +170,77 @@ def get_env(name: str, passphrase: str | None = None) -> Dict[str, Any]:
 @app.post("/api/envs/test")
 def test_env(name: str, passphrase: str):
     conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("SELECT payload_encrypted FROM envs WHERE name=?", (name,))
-    row = cur.fetchone()
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Environment not found")
-
     try:
-        blob = row[0]
-        if isinstance(blob, str):
-            blob = blob.encode("utf-8")
+        cur = conn.cursor()
+        cur.execute("SELECT payload_encrypted, platform, org_id FROM envs WHERE name=?", (name,))
+        row = cur.fetchone()
 
-        env = decrypt_json(passphrase, blob)
-    except Exception:
-        raise HTTPException(status_code=403, detail="Invalid passphrase")
+        if not row:
+            raise HTTPException(status_code=404, detail="Environment not found")
 
-    try:
-        client = UcmAxlClient(
-            base_url=env["cucm_url"],
-            username=env["cucm_username"],
-            password=env["cucm_password"],
-            verify_tls=env.get("cucm_verify_tls", False),
-        )
-        xml = client.get_version()
+        try:
+            env = decrypt_json(passphrase, row[0])
+        except Exception:
+            raise HTTPException(status_code=403, detail="Invalid passphrase")
 
-        return {
-            "status": "ok",
-            "message": "AXL authentication successful",
-            "raw_response_snippet": xml[:300],
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        platform = env.get("platform", "CUCM").upper()
+
+        # 🔹 CUCM ENGINE
+        if platform == "CUCM":
+            client = build_client(env)
+            xml = client.get_version()
+
+            return {
+                "status": "ok",
+                "platform": "CUCM",
+                "message": "AXL authentication successful",
+                "raw_response_snippet": xml[:300],
+            }
+
+        # 🔹 WEBEX ENGINE
+        elif platform == "WEBEX":
+            try:
+                access_token = env.get("access_token")
+                if not access_token:
+                    raise HTTPException(status_code=400, detail="Missing Webex access token")
+            
+                webex = Webex(access_token=access_token)
+
+                org = webex.org
+                
+                # # 🔎 DEBUG HERE
+                # print("DEBUG ORG TYPE:", type(org))
+                # print("DEBUG ORG DIR:", dir(org))
+                # print("DEBUG ORG VARS:", vars(org))
+                
+                return {
+                    "status": "ok",
+                    "platform": "WEBEX",
+                    "message": f"Connected to Webex Org: {org.name}",
+                    "org_id": org.id,
+                }
+
+            except Exception as e:
+                error_text = str(e)
+
+                # Detect expired / invalid token
+                if "401" in error_text or "not accepted" in error_text.lower():
+                    raise HTTPException(
+                        status_code=401,
+                        detail={
+                            "type": "token_expired",
+                            "message": "Your Webex developer token has expired.",
+                            "token_url": "https://developer.webex.com/docs/getting-started"
+                        }
+                    )
+
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Webex authentication failed: {error_text}"
+                )
+
+    finally:
+        conn.close()
 
 @app.get("/api/dialplans/{env_name}")
 def get_dialplan(env_name: str):
@@ -214,12 +298,16 @@ def verify_globals(env_name: str, payload: VerifyGlobalsRequest):
 
     env = load_env_internal(env_name, passphrase)
 
-    client = UcmAxlClient(
-        base_url=env["cucm_url"],
-        username=env["cucm_username"],
-        password=env["cucm_password"],
-        verify_tls=env.get("cucm_verify_tls", False),
-    )
+    platform = env.get("platform", "CUCM").upper()
+
+    if platform != "CUCM":
+        raise HTTPException(
+            status_code=400,
+            detail="Global verification only supported for CUCM environments"
+        )
+
+    # Default path (CUCM or anything else handled inside build_client)
+    client = build_client(env)
 
     path = resolve_dialplan_path(env_name)
     if not path:
@@ -371,7 +459,7 @@ def execute(req: ExecuteRequest):
             raise HTTPException(status_code=400, detail="Plan payload missing 'plan'")
 
         # 2) Load + decrypt environment by env_name
-        cur.execute("SELECT payload_encrypted FROM envs WHERE name=?", (env_name,))
+        cur.execute("SELECT payload_encrypted, platform FROM envs WHERE name=?", (env_name,))
         env_row = cur.fetchone()
         if not env_row:
             raise HTTPException(status_code=404, detail=f"Environment not found for plan: {env_name}")
@@ -382,12 +470,13 @@ def execute(req: ExecuteRequest):
             raise HTTPException(status_code=403, detail="Invalid passphrase")
 
         # 3) Build CUCM client
-        client = UcmAxlClient(
-            base_url=env["cucm_url"],
-            username=env["cucm_username"],
-            password=env["cucm_password"],
-            verify_tls=env.get("cucm_verify_tls", False),  # default OFF
-        )
+        platform = env.get("platform", "CUCM").upper()
+
+        if platform == "WEBEX":
+            raise HTTPException(status_code=501, detail="Webex engine not implemented yet")
+
+        # Default path (CUCM or anything else handled inside build_client)
+        client = build_client(env)
 
         # 4) Execute plan against CUCM
         try:
@@ -464,7 +553,7 @@ def load_env_internal(name: str, passphrase: str) -> Dict[str, Any]:
     conn = db_connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT payload_encrypted FROM envs WHERE name=?", (name,))
+        cur.execute("SELECT payload_encrypted, platform FROM envs WHERE name=?", (name,))
         row = cur.fetchone()
 
         if not row:
@@ -575,12 +664,13 @@ def api_rollback(req: RollbackRequest):
             passphrase=req.passphrase  # now guaranteed str
         )
 
-        client = UcmAxlClient(
-            base_url=env["cucm_url"],
-            username=env["cucm_username"],
-            password=env["cucm_password"],
-            verify_tls=env.get("cucm_verify_tls", False),
-        )
+        platform = env.get("platform", "CUCM").upper()
+
+        if platform == "WEBEX":
+            raise HTTPException(status_code=501, detail="Webex engine not implemented yet")
+
+        # Default path (CUCM or anything else handled inside build_client)
+        client = build_client(env)
 
         return rollback_plan(
             plan_id=req.plan_id,

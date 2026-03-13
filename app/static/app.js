@@ -9,6 +9,43 @@ window.onerror = (msg, src, line, col, err) => {
   console.error("GLOBAL JS ERROR:", msg, err);
 };
 
+const platformSelect = document.getElementById("envPlatform");
+const cucmSection = document.getElementById("cucmSection");
+const webexSection = document.getElementById("webexSection");
+
+
+function updatePlatformUI() {
+  const platform = document.getElementById("envPlatform").value;
+  const cucmSection = document.getElementById("cucmSection");
+  const webexSection = document.getElementById("webexSection");
+
+  if (platform === "WEBEX") {
+    cucmSection.classList.add("hidden");
+    webexSection.classList.remove("hidden");
+  } else {
+    cucmSection.classList.remove("hidden");
+    webexSection.classList.add("hidden");
+  }
+  updateHeaderLinks(platform);
+}
+
+document.getElementById("envPlatform")
+  .addEventListener("change", updatePlatformUI);
+
+
+function updateHeaderLinks(platform) {
+  const cucmDocs = document.getElementById("cucmDocs");
+  const webexDocs = document.getElementById("webexDocs");
+
+  if (platform === "WEBEX") {
+    cucmDocs.style.display = "none";
+    webexDocs.style.display = "block";
+  } else {
+    cucmDocs.style.display = "block";
+    webexDocs.style.display = "none";
+  }
+}
+
 async function loadEnvs() {
   const r = await fetch("/api/envs");
   if (!r.ok) {
@@ -24,7 +61,9 @@ async function loadEnvs() {
     const opt = document.createElement("option");
     opt.value = e.name;
     opt.textContent =
-      (e.env_type === "test" ? "🧪 " : "🚨 ") + e.name;
+      (e.platform === "CUCM" ? "📞 " :
+      e.platform === "WEBEX" ? "☁️ " :
+      "") + e.name;
     sel.appendChild(opt);
   });
 
@@ -244,15 +283,15 @@ document.getElementById("executeBtn").onclick = async () => {
   document.getElementById("executeOut").textContent = JSON.stringify(j, null, 2);
 };
 
-function setPill(name, envType) {
+function setPill(name, envPlatform) {
   const pill = document.getElementById("selectedEnvLabel");
   if (!name) {
     pill.textContent = "None";
-    pill.className = "env-pill prod";
+    pill.className = "env-pill CUCM";
     return;
   }
   pill.textContent = name;
-  pill.className = "env-pill " + (envType === "test" ? "test" : "prod");
+  pill.className = "env-pill " + (envPlatform === "CUCM" ? "CUCM" : "WEBEX");
 }
 
 async function refreshEnvDropdown(selectName = "") {
@@ -284,52 +323,92 @@ async function refreshEnvDropdown(selectName = "") {
 
 document.getElementById("saveEnvBtn").onclick = async () => {
   const name = document.getElementById("envName").value.trim();
-  const cucm_url = document.getElementById("cucmUrl").value.trim();
-  const cucm_username = document.getElementById("cucmUser").value.trim();
-  const cucm_password = document.getElementById("cucmPass").value;
-  const cucm_verify_tls = document.getElementById("verifyTls").checked;
+  const platform = document.getElementById("envPlatform").value;
+
   const passphrase = document.getElementById("passphrase").value;
 
-  if (!name || !cucm_url || !cucm_username || !cucm_password) {
-    setText("envStatus", `<p class="err">Fill name, url, username, password.</p>`);
+  if (!name) {
+    setText("envStatus", `<p class="err">Environment name is required.</p>`);
     return;
   }
+
   if (!passphrase) {
     setText("envStatus", `<p class="err">Enter a passphrase to save.</p>`);
     return;
   }
 
-  const r = await fetch(`/api/envs/${encodeURIComponent(name)}?passphrase=${encodeURIComponent(passphrase)}`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ name, cucm_url, cucm_username, cucm_password, cucm_verify_tls })
-  });
+  let payload = {
+    name,
+    platform
+  };
 
+  if (platform === "CUCM") {
+    const cucm_url = document.getElementById("cucmUrl").value.trim();
+    const cucm_username = document.getElementById("cucmUser").value.trim();
+    const cucm_password = document.getElementById("cucmPass").value;
+    const cucm_verify_tls = document.getElementById("verifyTls").checked;
+
+    if (!cucm_url || !cucm_username || !cucm_password) {
+      setText("envStatus", `<p class="err">Fill URL, username, and password.</p>`);
+      return;
+    }
+
+    payload.cucm_url = cucm_url;
+    payload.cucm_username = cucm_username;
+    payload.cucm_password = cucm_password;
+    payload.cucm_verify_tls = cucm_verify_tls;
+  }
+
+  if (platform === "WEBEX") {
+    const access_token = document.getElementById("webexToken").value.trim();
+    const org_id = document.getElementById("webexOrgId").value.trim();
+
+    if (!access_token || !org_id) {
+      setText("envStatus", `<p class="err">Webex token and Org ID are required.</p>`);
+      return;
+    }
+
+  payload.access_token = access_token;
+  payload.org_id = org_id;
+}
+
+  const r = await fetch(
+    `/api/envs?passphrase=${encodeURIComponent(passphrase)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  const j = await r.json().catch(() => ({}));
+  console.log("Save response:", j);
+  
   if (!r.ok) {
-    const err = await r.json();
-    alert(err.detail || "Failed to load environment");
+    console.log("422 body:", j);
 
+    if (Array.isArray(j.detail)) {
+      alert(j.detail.map(e => e.msg).join("\n"));
+    } else {
+      alert(j.detail || JSON.stringify(j));
+    }
     return;
   }
 
-  const env = await r.json();
 
   setText("envStatus", `<p class="ok">Saved environment '${name}'.</p>`);
+
   await refreshEnvDropdown(name);
 
-  // Enable test button once env is saved
   document.getElementById("testEnvBtn").disabled = false;
 
-  // Update pill
-  const envType = document.getElementById("envType").value || "prod";
-  setPill(name, envType);
+  setPill(name, platform);
 };
 
 
 document.getElementById("envSelect").onchange = async (e) => {
   const name = e.target.value;
 
-  // If user chose placeholder, reset pill + disable testing
   if (!name) {
     selectedEnv = null;
     setPill("", "prod");
@@ -341,7 +420,6 @@ document.getElementById("envSelect").onchange = async (e) => {
   const passphrase = document.getElementById("passphrase").value;
   if (!passphrase) {
     alert("Enter passphrase to load environment");
-    // revert selection immediately
     e.target.value = "";
     setPill("", "prod");
     document.getElementById("testEnvBtn").disabled = true;
@@ -352,31 +430,42 @@ document.getElementById("envSelect").onchange = async (e) => {
     `/api/envs/${encodeURIComponent(name)}?passphrase=${encodeURIComponent(passphrase)}`
   );
 
-  const j = await r.json().catch(() => ({}));
+  const env = await r.json().catch(() => ({}));
 
   if (!r.ok) {
-    alert(j.detail || "Failed to load environment (wrong passphrase?)");
-    // revert selection so user doesn't get stuck
+    alert(env.detail || "Failed to load environment");
     e.target.value = "";
     setPill("", "prod");
     document.getElementById("testEnvBtn").disabled = true;
     return;
   }
 
-  // success
-  const env = j;
   selectedEnv = env.name;
 
+  // 🔹 Set common fields
   document.getElementById("envName").value = env.name || name;
-  document.getElementById("envType").value = env.env_type || "prod";
-  document.getElementById("cucmUrl").value = env.cucm_url || "";
-  document.getElementById("cucmUser").value = env.cucm_username || "";
-  document.getElementById("verifyTls").checked = env.cucm_verify_tls === true;
+  document.getElementById("envPlatform").value = env.platform || "CUCM";
+  
 
-  // Never auto-fill AXL password (you said you're ok with this)
-  document.getElementById("cucmPass").value = "";
+  // 🔹 Sync platform UI FIRST
+  updatePlatformUI();
+  updateHeaderLinks(env.platform || "CUCM");
 
-  setPill(name, env.env_type || "prod");
+  // 🔹 Populate CUCM fields if applicable
+  if (env.platform === "CUCM") {
+    document.getElementById("cucmUrl").value = env.cucm_url || "";
+    document.getElementById("cucmUser").value = env.cucm_username || "";
+    document.getElementById("verifyTls").checked = env.cucm_verify_tls === true;
+    document.getElementById("cucmPass").value = ""; // never auto-fill password
+  }
+
+  // 🔹 Populate Webex token if applicable
+  if (env.platform === "WEBEX") {
+    document.getElementById("webexToken").value = "";
+    document.getElementById("webexOrgId").value = env.org_id || "";
+  }
+
+  setPill(name, env.platform || "CUCM");
   document.getElementById("testEnvBtn").disabled = false;
 
   updateUiState();
@@ -460,11 +549,15 @@ function startProgressPoll(planId) {
 
 // initial load
 refreshEnvDropdown().then(() => {
-  setPill("", "prod");
+  setPill("", "CUCM");
   document.getElementById("testEnvBtn").disabled = true;
   updateUiState();
 });
+  
 
 document.addEventListener("DOMContentLoaded", () => {
+  const platformSelect = document.getElementById("envPlatform");
+  platformSelect.addEventListener("change", updatePlatformUI);
+  updatePlatformUI();
   maybeShowRollbackLink();
-  });
+});
