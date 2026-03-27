@@ -4,6 +4,7 @@ import io
 import json
 import os
 import uuid
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -75,6 +76,26 @@ def resolve_dialplan_path(env_name: str) -> str:
 
     return str(path)
 
+def ensure_env_dialplan(env_name: str):
+    base = Path(os.getenv("APP_DATA_DIR", "/data")) / "dialplans" / "customers"
+
+    safe_env = env_name.lower().replace(" ", "-")
+    env_dir = base / safe_env
+    env_dir.mkdir(parents=True, exist_ok=True)
+
+    target = env_dir / "dialplan.yml"
+
+    # Template dialplan
+    template = base / "Demo" / "dialplan.yml"
+
+    if not template.exists():
+        print("WARNING: Demo dialplan template not found:", template)
+        return
+
+    if not target.exists():
+        shutil.copy(template, target)
+        print(f"Created dialplan for environment '{env_name}' from Demo template")
+
 def build_client(env: Dict[str, Any]):
     platform = env.get("platform", "CUCM").upper()
 
@@ -133,6 +154,10 @@ def upsert_env(payload: EnvUpsert, passphrase: Optional[str] = None):
             (payload.name, blob, payload.platform, data.get("org_id"), datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
+        
+        # Ensure dialplan folder exists
+        ensure_env_dialplan(payload.name)
+        
         return {"status": "OK"}
     finally:
         conn.close()
@@ -319,13 +344,24 @@ def verify_globals(env_name: str, payload: VerifyGlobalsRequest):
     existing = {p.strip() for p in client.list_partitions()}
 
     globals_section = dialplan.get("globals", {})
-    global_partitions = globals_section.get("partitions", {}).values()
+    global_partitions = set(globals_section.get("partitions", {}).values())
+
+    # Also collect CSS members
+    css_partitions = set()
+
+    for css in dialplan.get("css", {}).values():
+        for m in css.get("members", []):
+            css_partitions.add(m)
+
+    all_partitions = global_partitions.union(css_partitions)
+    
     print("YAML globals:", repr(list(global_partitions)))
     print("AXL partitions:", repr(list(existing)))
+    
     found = []
     missing = []
 
-    for name in global_partitions:
+    for name in all_partitions:
         if not name:
             continue
 

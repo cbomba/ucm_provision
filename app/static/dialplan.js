@@ -7,7 +7,7 @@ const testEnvBtn = document.getElementById("testEnvBtn");
 const loadBtn = document.getElementById("loadDialplanBtn");
 const verifyBtn = document.getElementById("verifyGlobalsBtn");
 const statusEl = document.getElementById("dialplanStatus");
-
+const testEnvStatus = document.getElementById("testEnvStatus");
 const exampleCard = document.getElementById("exampleSiteCard");
 const partitionsCard = document.getElementById("partitionsCard");
 const cssCard = document.getElementById("cssCard");
@@ -90,7 +90,8 @@ testEnvBtn.addEventListener("click", async () => {
   if (!currentEnv) return;
 
   const passphrase = passphraseInput.value.trim();
-  statusEl.textContent = "Testing connection…";
+
+  testEnvStatus.textContent = "Testing connection…";
 
   try {
     const res = await fetch(
@@ -101,17 +102,17 @@ testEnvBtn.addEventListener("click", async () => {
     const data = await res.json();
 
     if (res.ok) {
-      statusEl.textContent = "✅ Connection successful";
+      testEnvStatus.textContent = "✅ Connection successful";
       connectionVerified = true;
       loadBtn.disabled = false;
     } else {
-      statusEl.textContent = `❌ ${data.detail || data.message}`;
+      testEnvStatus.textContent = `❌ ${data.detail || data.message}`;
       connectionVerified = false;
       loadBtn.disabled = true;
     }
 
   } catch (e) {
-    statusEl.textContent = "❌ Connection failed";
+    testEnvStatus.textContent = "❌ Connection failed";
     connectionVerified = false;
     loadBtn.disabled = true;
   }
@@ -121,7 +122,10 @@ testEnvBtn.addEventListener("click", async () => {
    Load dialplan
    ========================= */
 loadBtn.addEventListener("click", async () => {
-  if (!connectionVerified) return;
+  if (!connectionVerified) {
+  statusEl.textContent = "⚠ Please test the CUCM connection before loading the dialplan.";
+  return;
+}
 
   statusEl.textContent = "Loading dial plan…";
 
@@ -142,7 +146,10 @@ loadBtn.addEventListener("click", async () => {
    Render example site
    ========================= */
 document.getElementById("renderExampleBtn").addEventListener("click", async () => {
-  if (!dialplanLoaded) return;
+  if (!dialplanLoaded) {
+  statusEl.textContent = "⚠ Load the dialplan before verifying globals.";
+  return;
+}
 
   const payload = {
     site: document.getElementById("siteCode").value,
@@ -244,7 +251,15 @@ function renderCss(cssList) {
    Verify globals
    ========================= */
 verifyBtn.addEventListener("click", async () => {
-  if (!dialplanLoaded) return;
+  if (!connectionVerified) {
+    statusEl.textContent = "⚠ Please test the CUCM connection first.";
+    return;
+  }
+
+  if (!dialplanLoaded) {
+    statusEl.textContent = "⚠ Load the dialplan before verifying globals.";
+    return;
+  }
 
   const passphrase = passphraseInput.value.trim();
   if (!passphrase) return;
