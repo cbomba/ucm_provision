@@ -344,7 +344,29 @@ def verify_globals(env_name: str, payload: VerifyGlobalsRequest):
     existing = {p.strip() for p in client.list_partitions()}
 
     globals_section = dialplan.get("globals", {})
-    global_partitions = set(globals_section.get("partitions", {}).values())
+    globals_section = dialplan.get("globals", {})
+    global_partitions_map = globals_section.get("partitions", {})
+
+    # Only validate REAL partition names (values)
+    global_partitions = [
+        v.strip() for v in global_partitions_map.values() if v
+    ]
+
+    existing = {p.strip() for p in client.list_partitions()}
+
+    found = []
+    missing = []
+
+    for name in global_partitions:
+        if name in existing:
+            found.append(name)
+        else:
+            missing.append(name)
+
+    return {
+        "found": sorted(found),
+        "missing": sorted(missing),
+    }
 
     # Also collect CSS members
     css_partitions = set()
