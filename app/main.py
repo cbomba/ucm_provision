@@ -8,6 +8,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse, urlunparse
 import yaml
 
 
@@ -76,25 +77,71 @@ def resolve_dialplan_path(env_name: str) -> str:
 
     return str(path)
 
-def ensure_env_dialplan(env_name: str):
+def resolve_naming_path(env_name: str) -> str:
+    base = Path(os.getenv("APP_DATA_DIR", "/data")) / "dialplans" / "customers"
+    safe_env = env_name.lower().replace(" ", "-")
+    path = base / safe_env / "naming.yml"
+
+    print("DEBUG: Naming base =", base)
+    print("DEBUG: Naming env dir =", base / safe_env)
+    print("DEBUG: Naming full path =", path)
+    print("DEBUG: Exists? =", path.exists())
+
+    return str(path)
+
+def ensure_env_files(env_name: str):
     base = Path(os.getenv("APP_DATA_DIR", "/data")) / "dialplans" / "customers"
 
     safe_env = env_name.lower().replace(" ", "-")
     env_dir = base / safe_env
     env_dir.mkdir(parents=True, exist_ok=True)
 
-    target = env_dir / "dialplan.yml"
+    demo_dir = base / "Demo"
 
-    # Template dialplan
-    template = base / "Demo" / "dialplan.yml"
+    files_to_copy = [
+        "dialplan.yml",
+        "naming.yml",
+    ]
 
-    if not template.exists():
-        print("WARNING: Demo dialplan template not found:", template)
-        return
+    for fname in files_to_copy:
+        template = demo_dir / fname
+        target = env_dir / fname
 
-    if not target.exists():
-        shutil.copy(template, target)
-        print(f"Created dialplan for environment '{env_name}' from Demo template")
+        if not template.exists():
+            print(f"WARNING: Demo template not found: {template}")
+            continue
+
+        if not target.exists():
+            shutil.copy(template, target)
+            print(f"Created {fname} for environment '{env_name}' from Demo template")
+        
+        
+def normalize_cucm_url(url: str) -> str:
+    url = url.strip()
+
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    parsed = urlparse(url)
+
+    scheme = parsed.scheme or "https"
+    netloc = parsed.netloc or parsed.path  # handles cases like "10.1.1.1"
+    path = parsed.path or ""
+
+    # Ensure port
+    if ":" not in netloc:
+        netloc = f"{netloc}:8443"
+
+    # Normalize path
+    if not path or path == "/":
+        path = "/axl/"
+    else:
+        if not path.endswith("/"):
+            path += "/"
+        if not path.lower().startswith("/axl"):
+            path = "/axl/"
+
+    return urlunparse((scheme, netloc, path, "", "", ""))
 
 def build_client(env: Dict[str, Any]):
     platform = env.get("platform", "CUCM").upper()
@@ -136,6 +183,8 @@ def upsert_env(payload: EnvUpsert, passphrase: Optional[str] = None):
     if platform == "CUCM":
         if not data.get("cucm_url") or not data.get("cucm_username") or not data.get("cucm_password"):
             raise HTTPException(status_code=400, detail="Missing CUCM credentials")
+        
+        data["cucm_url"] = normalize_cucm_url(data["cucm_url"])
 
     elif platform == "WEBEX":
         if not data.get("access_token"):
@@ -155,10 +204,13 @@ def upsert_env(payload: EnvUpsert, passphrase: Optional[str] = None):
         )
         conn.commit()
         
-        # Ensure dialplan folder exists
-        ensure_env_dialplan(payload.name)
+        # Ensure customer folder exists
+        ensure_env_files(payload.name)
         
-        return {"status": "OK"}
+        return {
+            "status": "OK",
+            "normalized_url": data.get("cucm_url") if platform == "CUCM" else None
+            }
     finally:
         conn.close()
         
@@ -450,7 +502,12 @@ def create_plan(req: PlanRequest):
         rows = parse_site_rows(stored_path)
 
         # load naming profile
-        naming_path = os.getenv("APP_DEFAULT_NAMING", "/app/naming.yml")
+        naming_path = resolve_naming_path(req.env_name)
+
+        if not Path(naming_path).exists():
+            print("WARNING: naming.yml not found, falling back to default")
+            naming_path = os.getenv("APP_DEFAULT_NAMING", "/app/naming.yml")
+            
         dialplan_path = resolve_dialplan_path(req.env_name)
 
         naming = NamingProfile.load(
