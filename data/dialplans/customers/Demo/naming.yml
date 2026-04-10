@@ -1,0 +1,44 @@
+global:
+  separator: "-"
+  description_format: "{site_detail} {object_friendly}"
+
+objects:
+  region:
+    name: "{org}-{state}-{site_code}-REG"
+    description: "{site_detail} Region"
+
+  location:
+    name: "{org}-{state}-{site_code}-LOC"
+    description: "{site_detail} Location"
+
+  physical_location:
+    name: "{org}-{state}-{site_code}-PHY"
+    description: "{site_detail} Physical Location"
+
+  srst:
+    name: "{org}-{state}-{site_code}-SRST"
+    description: "{site_detail} SRST"
+
+  partition:
+    name: "{org}-{state}-{site_code}-PT"
+    description: "{site_detail} Partition"
+
+  css:
+    name: "{org}-{state}-{site_code}-CSS"
+    description: "{site_detail} CSS"
+
+  mrg:
+    name: "{org}-{state}-{site_code}-MRG"
+    description: "{site_detail} Media Resource Group"
+
+  mrgl:
+    name: "{org}-{state}-{site_code}-MRGL"
+    description: "{site_detail} Media Resource Group List"
+
+  device_pool:
+    name: "{org}-{state}-{site_code}-DP"
+    description: "{site_detail} Device Pool"
+
+  device_mobility:
+    name: "{org}-{state}-{site_code}-DMI"
+    description: "{site_detail} DMI"
